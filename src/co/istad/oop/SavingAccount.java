@@ -6,8 +6,11 @@ import java.time.LocalDate;
 import java.time.Period;
 
 public class SavingAccount extends Account {
-    BigDecimal interestRate;
-    Card card;
+    private BigDecimal interestRate;
+    private Card card;
+
+    public SavingAccount() {
+    }
 
     public SavingAccount(String accountNumber, String accountName, BigDecimal balance, LocalDate createdAt, BigDecimal interestRate, Card card) {
         super(accountNumber, accountName, balance, createdAt);
@@ -16,9 +19,25 @@ public class SavingAccount extends Account {
     }
 
     public BigDecimal getInterestRate() {
-        int years = Period.between(createdAt, LocalDate.now()).getYears();
+        return interestRate;
+    }
+
+    public void setInterestRate(BigDecimal interestRate) {
+        this.interestRate = interestRate;
+    }
+
+    public Card getCard() {
+        return card;
+    }
+
+    public void setCard(Card card) {
+        this.card = card;
+    }
+
+    public BigDecimal interestRateCalculation() {
+        int years = Period.between(getCreatedAt(), LocalDate.now()).getYears();
         if (years >= 1) {
-            return balance.multiply(BigDecimal.valueOf(interestRate.doubleValue() / 100))
+            return getBalance().multiply(BigDecimal.valueOf(interestRate.doubleValue() / 100))
                     .setScale(3, RoundingMode.FLOOR);
         } else {
             return BigDecimal.ZERO;
@@ -27,53 +46,59 @@ public class SavingAccount extends Account {
 
     @Override
     public void deposit(BigDecimal amount) {
-        super.deposit(amount);
-    }
-
-    public void deposit(BigDecimal amount, int enteredPin) {
-        if (card == null || card.pin != enteredPin) {
-            System.out.println("Invalid PIN");
-            return;
+        if (card != null) {
+            if (LocalDate.now().isAfter(card.getCreatedAt())) {
+                System.out.println("Card has expired!");
+                return;
+            }
+            if (!card.getCardNumber().equals("123456789")) {
+                System.out.println("Invalid card number!");
+                return;
+            }
+            if (card.getCsv() != 10000) {
+                System.out.println("Invalid card CSV!");
+                return;
+            }
+            if (!card.getPin().equals("1234")) {
+                System.out.println("Invalid card PIN!");
+                return;
+            }
+            super.deposit(amount);
+            System.out.println("Deposit successful!");
         }
-        if (card.isExpired()) {
-            System.out.println("Card is expired");
-            return;
-        }
-        super.deposit(amount);
     }
 
     @Override
     public void withdraw(BigDecimal amount) {
-        super.withdraw(amount);
-    }
-
-    public void withdraw(BigDecimal amount, int enteredPin) {
-        if (card == null || card.pin != enteredPin) {
-            System.out.println("Invalid PIN");
-            return;
+        if (card != null) {
+            if (LocalDate.now().isAfter(card.getExpiredAt())) {
+                System.out.println("Card has expired!");
+                return;
+            }
+            if (!card.getCardNumber().equals("123456789")) {
+                System.out.println("Invalid card number!");
+                return;
+            }
+            if (card.getCsv() != 10000) {
+                System.out.println("Invalid card CSV!");
+                return;
+            }
+            if (!card.getPin().equals("1234")) {
+                System.out.println("Invalid card PIN!");
+                return;
+            }
+            if (amount.compareTo(card.getOverLimit()) > 0) {
+                System.out.println("Amount exceeds the over limit " + card.getOverLimit() + " of the card!");
+            }
+            super.withdraw(amount);
         }
-        if (card.isExpired()) {
-            System.out.println("Card is expired");
-            return;
-        }
-        if (amount.compareTo(card.overLimit) > 0) {
-            System.out.println("Transaction denied. Amount exceeds your card over-limit (" + card.overLimit + ").");
-            return;
-        }
-        super.withdraw(amount);
     }
 
     @Override
     public void checkBalance() {
         super.checkBalance();
         System.out.println("Interest: " + interestRate);
-        System.out.println("Interest Rate: " + getInterestRate());
-        if (card != null) {
-            System.out.println("Card Info: ");
-            card.showCardInfo();
-        } else {
-            System.out.println("No card associated with this account");
-        }
-        System.out.println("--------------------------------------------------");
+        System.out.println("Interest Rate: " + interestRateCalculation());
+        System.out.println("========================================");
     }
 }
