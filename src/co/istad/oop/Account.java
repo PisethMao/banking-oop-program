@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 
-public class Account {
+public abstract class Account {
     private String accountNumber;
     private String accountName;
     private BigDecimal balance;
